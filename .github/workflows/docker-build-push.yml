@@ -38,14 +38,6 @@ jobs:
           username: ${{ secrets.registry-username }}
           password: ${{ secrets.registry-access-token }}
 
-      - name: Cache Docker layers 🗂️
-        uses: actions/cache@v4.1.1
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: Extract Docker metadata 🏷️
         id: meta
         uses: docker/metadata-action@v5.5.1
@@ -59,8 +51,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha
 
       - name: Scan image for vulnerabilities 📡
         uses: anchore/scan-action@v5.1.0
