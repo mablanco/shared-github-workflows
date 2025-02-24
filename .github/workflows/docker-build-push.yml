@@ -45,7 +45,7 @@ jobs:
           images: ${{ inputs.container-registry }}/${{ inputs.image-name }}
 
       - name: Build and Push Docker image 🏗️
-        uses: docker/build-push-action@v6.13.0
+        uses: docker/build-push-action@v6.14.0
         with:
           context: .
           push: true
