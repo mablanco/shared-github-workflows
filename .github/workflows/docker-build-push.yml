@@ -40,7 +40,7 @@ jobs:
 
       - name: Extract Docker metadata 🏷️
         id: meta
-        uses: docker/metadata-action@v5.6.1
+        uses: docker/metadata-action@v5.7.0
         with:
           images: ${{ inputs.container-registry }}/${{ inputs.image-name }}
 
