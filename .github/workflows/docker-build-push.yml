@@ -53,7 +53,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Scan image for vulnerabilities 📡
-        uses: anchore/scan-action@v6.5.1
+        uses: anchore/scan-action@v7.0.0
         id: scan
         with:
           image: ${{ inputs.container-registry }}/${{ inputs.image-name }}:latest
