@@ -48,7 +48,9 @@ jobs:
         uses: docker/build-push-action@v7.4.0
         with:
           context: .
-          push: true
+          # Pull requests only build the image (kept in the local daemon for scanning)
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -56,7 +58,7 @@ jobs:
         uses: anchore/scan-action@v7.4.2
         id: scan
         with:
-          image: ${{ inputs.container-registry }}/${{ inputs.image-name }}:latest
+          image: ${{ inputs.container-registry }}/${{ inputs.image-name }}:${{ steps.meta.outputs.version }}
           fail-build: false
           only-fixed: true
 
@@ -67,3 +69,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
+          # Published images are reported against the default branch so the alerts
+          # show up in the default Security view instead of only under the tag ref
+          ref: ${{ github.event_name != 'pull_request' && format('refs/heads/{0}', github.event.repository.default_branch) || '' }}
+          sha: ${{ github.event_name != 'pull_request' && github.sha || '' }}
