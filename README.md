@@ -15,9 +15,10 @@ It runs these steps:
 1. Checks out the repository.
 2. Logs into the container registry.
 3. Generates the image tags and labels with [docker/metadata-action](https://github.com/docker/metadata-action), using its default rules (the Git tag on tag pushes, `pr-<number>` on pull requests, the branch name on manual runs).
-4. Builds the image with [docker/build-push-action](https://github.com/docker/build-push-action).
-5. Scans the image with [Grype](https://github.com/anchore/grype), through [anchore/scan-action](https://github.com/anchore/scan-action).
-6. Uploads the scan results in SARIF format to the repository's code scanning alerts.
+4. Sets up a BuildKit builder with [docker/setup-buildx-action](https://github.com/docker/setup-buildx-action), which the layer cache needs.
+5. Builds the image with [docker/build-push-action](https://github.com/docker/build-push-action), reusing and saving layers in the GitHub Actions cache (`type=gha`, `mode=max`).
+6. Scans the image with [Grype](https://github.com/anchore/grype), through [anchore/scan-action](https://github.com/anchore/scan-action).
+7. Uploads the scan results in SARIF format to the repository's code scanning alerts.
 
 #### Pull requests vs. published images
 
