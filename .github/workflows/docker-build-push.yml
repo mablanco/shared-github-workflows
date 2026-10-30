@@ -44,6 +44,10 @@ jobs:
         with:
           images: ${{ inputs.container-registry }}/${{ inputs.image-name }}
 
+      # The GitHub Actions cache backend needs a BuildKit builder (docker-container driver)
+      - name: Set up Docker Buildx 🧰
+        uses: docker/setup-buildx-action@v4.4.1
+
       - name: Build and Push Docker image 🏗️
         uses: docker/build-push-action@v7.4.0
         with:
@@ -53,6 +57,8 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Scan image for vulnerabilities 📡
         uses: anchore/scan-action@v7.4.2
