@@ -23,6 +23,7 @@ It runs these steps:
 #### Pull requests vs. published images
 
 - **Pull requests** only build the image. It is loaded into the runner's Docker daemon and scanned there, and nothing is pushed to the registry.
+- **Pull requests from forks** get no secrets and a read-only token from GitHub, so they also skip the registry login and the upload of the scan results. The scan report is still printed in the job log.
 - **Any other event** (a tag push or a manual run, for example) builds the image, pushes it to the registry and scans the published image. Its scan results are reported against the default branch, so they show up in the repository's main Security view.
 
 The scan never fails the build (`fail-build: false`) and only reports vulnerabilities that already have a fix (`only-fixed: true`). Findings are meant to be reviewed in the Security tab, not to block a release because of an unfixable issue in a base image.
