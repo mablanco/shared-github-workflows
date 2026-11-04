@@ -1,0 +1,81 @@
+name: 'Ansible role lint and Molecule tests'
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: Python version to run ansible-lint and Molecule with
+        required: false
+        type: string
+        default: '3.14'
+      molecule-matrix:
+        description: >-
+          JSON list of Molecule runs. Each entry has a name, and optionally a
+          scenario (default: "default") and env, newline-separated KEY=value
+          pairs for the run.
+        required: false
+        type: string
+        default: '[{"name": "default"}]'
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository 🛎️
+        uses: actions/checkout@v7
+
+      - name: Set up Python ${{ inputs.python-version }} 🐍
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install the tools 📦
+        run: pip install -r requirements-dev.txt
+
+      - name: Run ansible-lint 🔍
+        run: ansible-lint
+
+  molecule:
+    name: Molecule (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.molecule-matrix) }}
+    steps:
+      - name: Checkout repository 🛎️
+        uses: actions/checkout@v7
+
+      - name: Set up Python ${{ inputs.python-version }} 🐍
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install the tools 📦
+        run: pip install -r requirements-dev.txt
+
+      # Through an environment variable, so that the value is never part of
+      # the script
+      - name: Set the run's environment variables 🔧
+        if: ${{ matrix.env }}
+        env:
+          RUN_ENV: ${{ matrix.env }}
+        run: printf '%s\n' "$RUN_ENV" >> "$GITHUB_ENV"
+
+      - name: Run Molecule 🧪
+        env:
+          SCENARIO: ${{ matrix.scenario || 'default' }}
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+        run: molecule test --scenario-name "$SCENARIO"
