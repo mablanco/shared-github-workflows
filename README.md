@@ -4,6 +4,8 @@ Reusable GitHub Actions workflows for CI/CD pipelines, designed to streamline au
 
 Each workflow lives in `.github/workflows/` and is triggered with `workflow_call`, so other repositories can call it with a few lines of YAML instead of copying the whole pipeline.
 
+Referencing a workflow `@main` always runs its latest version. If you prefer to decide when to pick up changes, pin a tag or a commit SHA instead.
+
 ## Workflows
 
 ### `docker-build-push.yml`
@@ -76,7 +78,63 @@ jobs:
       registry-access-token: ${{ secrets.DOCKERHUB_TOKEN }}
 ```
 
-Referencing `@main` always runs the latest version of the workflow. If you prefer to decide when to pick up changes, pin a tag or a commit SHA instead.
+### `ansible-role-ci.yml`
+
+Lints an Ansible role and tests it with [Molecule](https://ansible.readthedocs.io/projects/molecule/).
+
+It runs two jobs:
+
+1. **lint**: installs the role's `requirements-dev.txt` and runs [ansible-lint](https://ansible.readthedocs.io/projects/lint/), once.
+2. **molecule**: runs `molecule test` once for each entry of `molecule-matrix`, in parallel. A failing run doesn't cancel the others.
+
+The tools come from the role's `requirements-dev.txt`, so each role pins its own versions of ansible-core, ansible-lint and Molecule, and uses the same ones locally. ansible-lint and Molecule read their usual configuration from the role (`.ansible-lint`, `.yamllint`, `molecule/`).
+
+#### Inputs
+
+| Name | Required | Default | Description |
+|---|---|---|---|
+| `python-version` | no | `3.14` | Python version for the tools |
+| `molecule-matrix` | no | `[{"name": "default"}]` | JSON list of Molecule runs (see below) |
+
+Each entry of `molecule-matrix` has:
+
+- `name`: shown in the job name, `Molecule (<name>)`.
+- `scenario` (optional): the Molecule scenario to run. Defaults to `default`.
+- `env` (optional): environment variables for the run, as `KEY=value` lines, for roles whose scenario reads them.
+
+#### Usage
+
+A role with only the `default` scenario:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Weekly, to catch changes in the distributions' packages
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: mablanco/shared-github-workflows/.github/workflows/ansible-role-ci.yml@main
+```
+
+A role with several scenarios, or one scenario run with different variables:
+
+```yaml
+jobs:
+  ci:
+    uses: mablanco/shared-github-workflows/.github/workflows/ansible-role-ci.yml@main
+    with:
+      molecule-matrix: >-
+        [{"name": "default"},
+         {"name": "upgrade", "scenario": "upgrade"},
+         {"name": "git", "env": "DEPLOY_METHOD=git"}]
+```
 
 ## Maintenance
 
