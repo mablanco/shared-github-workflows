@@ -35,7 +35,7 @@ jobs:
       # skip the login and the SARIF upload. They only build and scan the image.
       - name: Log into registry ${{ inputs.container-registry }} 🔐
         if: ${{ !github.event.pull_request.head.repo.fork }}
-        uses: docker/login-action@v4.7.0
+        uses: docker/login-action@v4.8.0
         with:
           registry: ${{ inputs.container-registry }}
           username: ${{ secrets.registry-username }}
